@@ -21,12 +21,19 @@
           default = mkPoetryEnv {
             projectDir = self;
             extraPackages = p: with p; [ gradio ];
+            groups = [ "dev" "local" ];
             overrides = defaultPoetryOverrides.extend
               (self: super: {
 
                 chroma-hnswlib = super.chroma-hnswlib.override { preferWheel = true; };
                 chromadb = super.chromadb.override { preferWheel = true; };
                 cmake = pkgs.python3Packages.cmake;
+                triton = super.triton.overridePythonAttrs
+                  (
+                    old: {
+                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ self.cmake ];
+                    }
+                  );
                 gradio = super.gradio.overridePythonAttrs
                   (
                     old: {
@@ -62,6 +69,13 @@
                       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.poetry ];
                     }
                   );
+                llama-cpp-python = super.llama-cpp-python.overridePythonAttrs
+                  (
+                    old: {
+                      propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ self.pathspec ];
+                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.scikit-build-core super.pyproject-metadata ];
+                    }
+                  );
                 pydantic-extra-types = super.pydantic-extra-types.overridePythonAttrs
                   (
                     old: {
@@ -74,6 +88,19 @@
                       sourceRoot = "tokenizers-0.14.1/bindings/python";
                       cargoDeps = pkgs.rustPlatform.importCargoLock {
                         lockFile = ./nix/tokenizers/Cargo.lock;
+                      };
+                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                        pkgs.rustPlatform.cargoSetupHook
+                        pkgs.rustPlatform.maturinBuildHook
+                      ];
+                    }
+                  );
+                safetensors = super.safetensors.overridePythonAttrs
+                  (
+                    old: {
+                      sourceRoot = "safetensors-0.4.0/bindings/python";
+                      cargoDeps = pkgs.rustPlatform.importCargoLock {
+                        lockFile = ./nix/safetensors/Cargo.lock;
                       };
                       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
                         pkgs.rustPlatform.cargoSetupHook
