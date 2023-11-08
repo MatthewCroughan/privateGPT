@@ -31,7 +31,7 @@
                 triton = super.triton.overridePythonAttrs
                   (
                     old: {
-                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ self.cmake ];
+                      propagatedBuildInputs = builtins.filter (e: e.pname != "cmake") old.propagatedBuildInputs;
                     }
                   );
                 gradio = super.gradio.overridePythonAttrs
@@ -62,6 +62,12 @@
                       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.setuptools ];
                     }
                   );
+                scipy = super.scipy.overridePythonAttrs
+                  (
+                    old: {
+                      preConfigure = "";
+                    }
+                  );
                 llama-index = super.llama-index.overridePythonAttrs
                   (
                     old: {
@@ -72,8 +78,8 @@
                 llama-cpp-python = super.llama-cpp-python.overridePythonAttrs
                   (
                     old: {
-                      propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ self.pathspec ];
-                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.scikit-build-core super.pyproject-metadata ];
+                      propagatedBuildInputs = builtins.filter (e: e.pname != "cmake") old.propagatedBuildInputs ++ [ super.scikit-build-core super.pyproject-metadata super.pathspec ];
+                      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ super.scikit-build-core super.pyproject-metadata ];
                     }
                   );
                 pydantic-extra-types = super.pydantic-extra-types.overridePythonAttrs
