@@ -149,7 +149,7 @@
               });
           };
         };
-        devShells.foo = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           buildInputs = [ packages.default ];
         };
       });
