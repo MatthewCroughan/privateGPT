@@ -28,6 +28,7 @@
                 chroma-hnswlib = super.chroma-hnswlib.override { preferWheel = true; };
                 chromadb = super.chromadb.override { preferWheel = true; };
                 cmake = pkgs.python3Packages.cmake;
+                safetensors = pkgs.python3Packages.safetensors;
                 triton = super.triton.overridePythonAttrs
                   (
                     old: {
@@ -90,10 +91,18 @@
                   );
                 tokenizers = super.tokenizers.overridePythonAttrs
                   (
-                    old: {
-                      sourceRoot = "tokenizers-0.14.1/bindings/python";
+                    old: rec {
+                      src = pkgs.fetchFromGitHub {
+                        owner = "huggingface";
+                        repo = "tokenizers";
+                        rev = "refs/tags/v0.14.0";
+                        hash = "sha256-zCpKNMzIdQ0lLWdn4cENtBEMTA7+fg+N6wQGvio9llE=";
+                      };
+                      postPatch = ''
+                        cd bindings/python
+                      '';
                       cargoDeps = pkgs.rustPlatform.importCargoLock {
-                        lockFile = ./nix/tokenizers/Cargo.lock;
+                        lockFile = "${src}/bindings/python/Cargo.lock";
                       };
                       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
                         pkgs.rustPlatform.cargoSetupHook
@@ -101,25 +110,25 @@
                       ];
                     }
                   );
-                safetensors = super.safetensors.overridePythonAttrs
-                  (
-                    old: {
-                      sourceRoot = "safetensors-0.4.0/bindings/python";
-                      cargoDeps = pkgs.rustPlatform.importCargoLock {
-                        lockFile = ./nix/safetensors/Cargo.lock;
-                      };
-                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
-                        pkgs.rustPlatform.cargoSetupHook
-                        pkgs.rustPlatform.maturinBuildHook
-                      ];
-                    }
-                  );
+                #safetensors = super.safetensors.overridePythonAttrs
+                #  (
+                #    old: {
+                #      sourceRoot = "safetensors-0.4.0/bindings/python";
+                #      cargoDeps = pkgs.rustPlatform.importCargoLock {
+                #        lockFile = ./nix/safetensors/Cargo.lock;
+                #      };
+                #      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                #        pkgs.rustPlatform.cargoSetupHook
+                #        pkgs.rustPlatform.maturinBuildHook
+                #      ];
+                #    }
+                #  );
                 tiktoken = super.tiktoken.overridePythonAttrs
                   (
                     old: {
                       postPatch = ''
                         ln -s ${./nix/tiktoken/Cargo.lock} Cargo.lock
-                       '';
+                      '';
                       cargoDeps = pkgs.rustPlatform.importCargoLock {
                         lockFile = ./nix/tiktoken/Cargo.lock;
                       };
