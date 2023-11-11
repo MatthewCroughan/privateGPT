@@ -13,7 +13,7 @@
   outputs = { self, nixpkgs, flake-utils, poetry2nix }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = import nixpkgs { config.allowUnfree = true; inherit system; };
         inherit (poetry2nix.lib.mkPoetry2Nix { inherit pkgs; }) mkPoetryApplication defaultPoetryOverrides mkPoetryEnv;
       in
       rec {
@@ -79,6 +79,10 @@
                 llama-cpp-python = super.llama-cpp-python.overridePythonAttrs
                   (
                     old: {
+                      cmakeFlags = [
+                        "-DLLAMA_CUBLAS=on"
+                      ];
+                      buildInputs = (old.buildInputs or []) ++ [ pkgs.cudaPackages.cudatoolkit.out pkgs.cudaPackages.cudatoolkit.lib ];
                       propagatedBuildInputs = builtins.filter (e: e.pname != "cmake") old.propagatedBuildInputs ++ [ super.scikit-build-core super.pyproject-metadata super.pathspec ];
                       nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ super.scikit-build-core super.pyproject-metadata ];
                     }
