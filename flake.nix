@@ -21,6 +21,11 @@
           default = mkPoetryApplication {
             projectDir = self;
             groups = [ "dev" "local" "ui" ];
+            prePatch = ''
+              substituteInPlace ./private_gpt/constants.py --replace "Path(__file__).parents[1]" "os.environ.get('PROJECT_ROOT_PATH', os.getcwd())"
+              echo "import os" | cat - ./private_gpt/constants.py > temp && mv temp ./private_gpt/constants.py
+              cat ./private_gpt/constants.py
+            '';
             overrides = defaultPoetryOverrides.extend
               (self: super: {
 
