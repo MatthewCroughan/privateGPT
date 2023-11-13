@@ -18,10 +18,9 @@
       in
       rec {
         packages = {
-          default = mkPoetryEnv {
+          default = mkPoetryApplication {
             projectDir = self;
-            extraPackages = p: with p; [ gradio ];
-            groups = [ "dev" "local" ];
+            groups = [ "dev" "local" "ui" ];
             overrides = defaultPoetryOverrides.extend
               (self: super: {
 
@@ -79,12 +78,10 @@
                 llama-cpp-python = super.llama-cpp-python.overridePythonAttrs
                   (
                     old: {
-                      cmakeFlags = [
-                        "-DLLAMA_CUBLAS=on"
-                      ];
-                      buildInputs = (old.buildInputs or []) ++ [ pkgs.cudaPackages.cudatoolkit.out pkgs.cudaPackages.cudatoolkit.lib ];
+                      CMAKE_ARGS = "-DLLAMA_CUBLAS=on";
+                      buildInputs = (old.buildInputs or []) ++ [ pkgs.cudaPackages.libcublas pkgs.cudaPackages.cudatoolkit.lib ];
                       propagatedBuildInputs = builtins.filter (e: e.pname != "cmake") old.propagatedBuildInputs ++ [ super.scikit-build-core super.pyproject-metadata super.pathspec ];
-                      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ super.scikit-build-core super.pyproject-metadata ];
+                      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ super.scikit-build-core super.pyproject-metadata pkgs.cudaPackages.cudatoolkit ];
                     }
                   );
                 pydantic-extra-types = super.pydantic-extra-types.overridePythonAttrs
