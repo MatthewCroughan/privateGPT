@@ -149,11 +149,8 @@
                 ruff = super.ruff.overridePythonAttrs
                   (
                     old: {
-                      postPatch = ''
-                        cp ${./nix/ruff/Cargo.lock} Cargo.lock
-                       '';
                       cargoDeps = pkgs.rustPlatform.importCargoLock {
-                        lockFile = ./nix/ruff/Cargo.lock;
+                        lockFile = "${super.ruff.src}/Cargo.lock";
                       };
                       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
                         pkgs.rustPlatform.cargoSetupHook
