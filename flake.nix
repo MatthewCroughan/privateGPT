@@ -102,7 +102,7 @@
                   (
                     old: {
                       CMAKE_ARGS = "-DLLAMA_CUBLAS=on";
-                      buildInputs = (old.buildInputs or []) ++ [ pkgs.cudaPackages_12.libcublas pkgs.cudaPackages_12.cudatoolkit.lib ];
+                      buildInputs = (old.buildInputs or []) ++ [ pkgs.cudaPackages.libcublas pkgs.cudaPackages.cudatoolkit.lib ];
                       propagatedBuildInputs = builtins.filter (e: e.pname != "cmake") old.propagatedBuildInputs ++ [ super.scikit-build-core super.pyproject-metadata super.pathspec ];
                       nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ super.scikit-build-core super.pyproject-metadata pkgs.cudaPackages.cudatoolkit ];
                     }
@@ -139,18 +139,20 @@
                       buildInputs = (old.buildInputs or [ ]) ++ [ super.hatchling ];
                     }
                   );
-                nvidia-cusparse-cu12 = super.nvidia-cusparse-cu12.overridePythonAttrs
-                  (
-                    old: {
-                      buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.cudaPackages_12.libnvjitlink ];
-                    }
-                  );
-                nvidia-cusolver-cu12 = super.nvidia-cusolver-cu12.overridePythonAttrs
-                  (
-                    old: {
-                      buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.cudaPackages_12.libnvjitlink pkgs.cudaPackages_12.libcublas pkgs.cudaPackages_12.libcusparse ];
-                    }
-                  );
+#                nvidia-cusparse-cu12 = super.nvidia-cusparse-cu12.overridePythonAttrs
+#                  (
+#                    old: {
+#                      buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.cudaPackages.libnvjitlink ];
+#                    }
+#                  );
+#                nvidia-cusolver-cu12 = super.nvidia-cusolver-cu12.overridePythonAttrs
+#                  (
+#                    old: {
+#                      buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.cudaPackages.libnvjitlink pkgs.cudaPackages.libcublas pkgs.cudaPackages.libcusparse ];
+#                    }
+#                  );
+                nvidia-cusparse-cu12 = pkgs.cudaPackages.libcusparse;
+                nvidia-cusolver-cu12 = pkgs.cudaPackages.libcusolver;
                 tokenizers = super.tokenizers.overridePythonAttrs
                   (
                     old: rec {
