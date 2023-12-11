@@ -5,7 +5,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     poetry2nix = {
-      url = "github:pegasust/poetry2nix/orjson";
+      url = "github:Vonfry/poetry2nix/update/ruff";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -22,7 +22,7 @@
             projectDir = self;
             groups = [ "dev" "local" "ui" ];
             prePatch = ''
-              substituteInPlace ./private_gpt/constants.py --replace "Path(__file__).parents[1]" "os.environ.get('PROJECT_ROOT_PATH', os.getcwd())"
+              substituteInPlace ./private_gpt/constants.py --replace "Path(__file__).parents[1]" "Path(os.environ.get('PROJECT_ROOT_PATH', os.getcwd()))"
               echo "import os" | cat - ./private_gpt/constants.py > temp && mv temp ./private_gpt/constants.py
               cat ./private_gpt/constants.py
             '';
@@ -51,17 +51,35 @@
                       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.hatch-requirements-txt super.hatch-fancy-pypi-readme ];
                     }
                   );
-                rpds-py = super.rpds-py.overridePythonAttrs
+                #rpds-py = super.rpds-py.overridePythonAttrs
+                #  (
+                #    old: {
+                #      cargoDeps = pkgs.rustPlatform.fetchCargoTarball {
+                #        inherit (old) src;
+                #        name = "${old.pname}-${old.version}";
+                #        hash = "sha256-jdr0xN3Pd/bCoKfLLFNGXHJ+G1ORAft6/W7VS3PbdHs=";
+                #      };
+                #    }
+                #  );
+                pypika = super.pypika.overridePythonAttrs
                   (
                     old: {
-                      cargoDeps = pkgs.rustPlatform.fetchCargoTarball {
-                        inherit (old) src;
-                        name = "${old.pname}-${old.version}";
-                        hash = "sha256-jdr0xN3Pd/bCoKfLLFNGXHJ+G1ORAft6/W7VS3PbdHs=";
-                      };
+                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.setuptools ];
                     }
                   );
-                pypika = super.pypika.overridePythonAttrs
+                evaluate = super.evaluate.overridePythonAttrs
+                  (
+                    old: {
+                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.setuptools ];
+                    }
+                  );
+                sentence-transformers = super.sentence-transformers.overridePythonAttrs
+                  (
+                    old: {
+                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.setuptools ];
+                    }
+                  );
+                optimum = super.optimum.overridePythonAttrs
                   (
                     old: {
                       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.setuptools ];
@@ -80,19 +98,57 @@
                       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.poetry ];
                     }
                   );
-                llama-cpp-python = super.llama-cpp-python.overridePythonAttrs
+                llama-cpp-python = (super.llama-cpp-python.overridePythonAttrs
                   (
                     old: {
                       CMAKE_ARGS = "-DLLAMA_CUBLAS=on";
-                      buildInputs = (old.buildInputs or []) ++ [ pkgs.cudaPackages.libcublas pkgs.cudaPackages.cudatoolkit.lib ];
+                      buildInputs = (old.buildInputs or []) ++ [ pkgs.cudaPackages_12.libcublas pkgs.cudaPackages_12.cudatoolkit.lib ];
                       propagatedBuildInputs = builtins.filter (e: e.pname != "cmake") old.propagatedBuildInputs ++ [ super.scikit-build-core super.pyproject-metadata super.pathspec ];
                       nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ super.scikit-build-core super.pyproject-metadata pkgs.cudaPackages.cudatoolkit ];
                     }
-                  );
+                  )).override { stdenv = pkgs.gcc11Stdenv; };
+                onnx = pkgs.onnxruntime;
+#                    super.onnx.overridePythonAttrs
+#                  (
+#                    old: {
+#                      cmakeFlags = (old.cmakeFlags or []) ++ [
+#                        "-DFETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS"
+#                        "-DFETCHCONTENT_FULLY_DISCONNECTED=1"
+#                      ];
+#                      buildInputs = (old.buildInputs or [ ]) ++ [
+#                        pkgs.abseil-cpp
+#                      ];
+#                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.cmake ];
+#                    }
+#                  );
                 pydantic-extra-types = super.pydantic-extra-types.overridePythonAttrs
                   (
                     old: {
                       buildInputs = (old.buildInputs or [ ]) ++ [ super.hatchling ];
+                    }
+                  );
+                pyarrow-hotfix = super.pyarrow-hotfix.overridePythonAttrs
+                  (
+                    old: {
+                      buildInputs = (old.buildInputs or [ ]) ++ [ super.hatchling ];
+                    }
+                  );
+                sympy = super.sympy.overridePythonAttrs
+                  (
+                    old: {
+                      buildInputs = (old.buildInputs or [ ]) ++ [ super.hatchling ];
+                    }
+                  );
+                nvidia-cusparse-cu12 = super.nvidia-cusparse-cu12.overridePythonAttrs
+                  (
+                    old: {
+                      buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.cudaPackages_12.libnvjitlink ];
+                    }
+                  );
+                nvidia-cusolver-cu12 = super.nvidia-cusolver-cu12.overridePythonAttrs
+                  (
+                    old: {
+                      buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.cudaPackages_12.libnvjitlink pkgs.cudaPackages_12.libcublas pkgs.cudaPackages_12.libcusparse ];
                     }
                   );
                 tokenizers = super.tokenizers.overridePythonAttrs
@@ -101,8 +157,8 @@
                       src = pkgs.fetchFromGitHub {
                         owner = "huggingface";
                         repo = "tokenizers";
-                        rev = "refs/tags/v0.14.0";
-                        hash = "sha256-zCpKNMzIdQ0lLWdn4cENtBEMTA7+fg+N6wQGvio9llE=";
+                        rev = "refs/tags/v0.15.0";
+                        hash = "sha256-+yfX12eKtgZV1OQvPOlMVTONbpFuigHcl4SjoCIZkSk=";
                       };
                       postPatch = ''
                         cd bindings/python
