@@ -5,7 +5,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     poetry2nix = {
-      url = "github:Vonfry/poetry2nix/update/ruff";
+      url = "github:nix-community/poetry2nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -28,29 +28,39 @@
             '';
             overrides = defaultPoetryOverrides.extend
               (self: super: {
-
                 chroma-hnswlib = super.chroma-hnswlib.override { preferWheel = true; };
-                chromadb = super.chromadb.override { preferWheel = true; };
-                cmake = pkgs.python3Packages.cmake;
+#                chroma-hnswlib = super.chroma-hnswlib.overridePythonAttrs
+#                  (
+#                    old: {
+#                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.setuptools ];
+#                    }
+#                  );
+                chromadb = super.chromadb.overridePythonAttrs
+                  (
+                    old: {
+                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.setuptools ];
+                    }
+                  );
+#                cmake = pkgs.python3Packages.cmake;
                 safetensors = pkgs.python3Packages.safetensors;
-                triton = super.triton.overridePythonAttrs
-                  (
-                    old: {
-                      propagatedBuildInputs = builtins.filter (e: e.pname != "cmake") old.propagatedBuildInputs;
-                    }
-                  );
-                gradio = super.gradio.overridePythonAttrs
-                  (
-                    old: {
-                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.hatch-requirements-txt super.hatch-fancy-pypi-readme ];
-                    }
-                  );
-                gradio-client = super.gradio-client.overridePythonAttrs
-                  (
-                    old: {
-                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.hatch-requirements-txt super.hatch-fancy-pypi-readme ];
-                    }
-                  );
+#                triton = super.triton.overridePythonAttrs
+#                  (
+#                    old: {
+#                      propagatedBuildInputs = builtins.filter (e: e.pname != "cmake") old.propagatedBuildInputs;
+#                    }
+#                  );
+#                gradio = super.gradio.overridePythonAttrs
+#                  (
+#                    old: {
+#                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.hatch-requirements-txt super.hatch-fancy-pypi-readme ];
+#                    }
+#                  );
+#                gradio-client = super.gradio-client.overridePythonAttrs
+#                  (
+#                    old: {
+#                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ super.hatch-requirements-txt super.hatch-fancy-pypi-readme ];
+#                    }
+#                  );
                 #rpds-py = super.rpds-py.overridePythonAttrs
                 #  (
                 #    old: {
@@ -139,18 +149,6 @@
                       buildInputs = (old.buildInputs or [ ]) ++ [ super.hatchling ];
                     }
                   );
-#                nvidia-cusparse-cu12 = super.nvidia-cusparse-cu12.overridePythonAttrs
-#                  (
-#                    old: {
-#                      buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.cudaPackages.libnvjitlink ];
-#                    }
-#                  );
-#                nvidia-cusolver-cu12 = super.nvidia-cusolver-cu12.overridePythonAttrs
-#                  (
-#                    old: {
-#                      buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.cudaPackages.libnvjitlink pkgs.cudaPackages.libcublas pkgs.cudaPackages.libcusparse ];
-#                    }
-#                  );
                 nvidia-cusparse-cu12 = pkgs.cudaPackages.libcusparse;
                 nvidia-cusolver-cu12 = pkgs.cudaPackages.libcusolver;
                 tokenizers = super.tokenizers.overridePythonAttrs
@@ -174,19 +172,36 @@
                       ];
                     }
                   );
-                #safetensors = super.safetensors.overridePythonAttrs
-                #  (
-                #    old: {
-                #      sourceRoot = "safetensors-0.4.0/bindings/python";
-                #      cargoDeps = pkgs.rustPlatform.importCargoLock {
-                #        lockFile = ./nix/safetensors/Cargo.lock;
-                #      };
-                #      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
-                #        pkgs.rustPlatform.cargoSetupHook
-                #        pkgs.rustPlatform.maturinBuildHook
-                #      ];
-                #    }
-                #  );
+#                safetensors = super.safetensors.overridePythonAttrs
+#                  (
+#                    old: {
+#                      preferWheel = true;
+#                      sourceRoot = "safetensors-0.4.0/bindings/python";
+#                      cargoDeps = pkgs.rustPlatform.importCargoLock {
+#                        lockFile = ./nix/safetensors/Cargo.lock;
+#                      };
+#                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+#                        pkgs.rustPlatform.cargoSetupHook
+#                        pkgs.rustPlatform.maturinBuildHook
+#                      ];
+#                    }
+#                  );
+                torch = super.torch.overridePythonAttrs (old: {
+                  autoPatchelfIgnoreMissingDeps = true;
+                  buildInputs = [
+                    pkgs.cudaPackages_12.libcublas
+                    pkgs.cudaPackages_12.libcurand
+                    pkgs.cudaPackages_12.libcusparse
+                    pkgs.cudaPackages_12.libcufft
+                    pkgs.cudaPackages_12.cudnn
+                    pkgs.cudaPackages_12.cuda_cupti
+                    pkgs.cudaPackages_12.cuda_nvrtc
+                    pkgs.cudaPackages_12.cuda_cudart
+                    pkgs.cudaPackages_12.cuda_nvtx
+#                    pkgs.cudaPackages_12.cudatoolkit
+                    pkgs.cudaPackages_12.nccl
+                  ];
+                });
                 tiktoken = super.tiktoken.overridePythonAttrs
                   (
                     old: {
